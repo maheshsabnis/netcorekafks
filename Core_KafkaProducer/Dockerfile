@@ -1,21 +1,14 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS base
-WORKDIR /app
-EXPOSE 80
-
-FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+#Dockerfile
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS builder
 WORKDIR /src
-COPY ["Core_KafkaProducer/Core_KafkaProducer.csproj", "Core_KafkaProducer/"]
-RUN dotnet restore "Core_KafkaProducer/Core_KafkaProducer.csproj"
+COPY ./Core_KafkaProducer.csproj .
+RUN dotnet restore Core_KafkaProducer.csproj
 COPY . .
-WORKDIR "/src/Core_KafkaProducer"
-RUN dotnet build "Core_KafkaProducer.csproj" -c Release -o /app/build
+RUN dotnet build Core_KafkaProducer.csproj -c Debug -o /src/out
 
-FROM build AS publish
-RUN dotnet publish "Core_KafkaProducer.csproj" -c Release -o /app/publish
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=builder /src/out .
+
+EXPOSE 80
 ENTRYPOINT ["dotnet", "Core_KafkaProducer.dll"]

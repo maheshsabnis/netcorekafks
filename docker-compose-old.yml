@@ -1,0 +1,42 @@
+version: '3.9'
+services:
+  producer:
+    container_name: producervm
+    ports: 
+        - 9001:80
+    build: Core_KafkaProducer 
+    depends_on:
+      - zookeeper
+      - broker    
+  subscriber:
+     container_name: subscribervm
+     ports: 
+        - 9002:80
+     build: Core_KafkaConsumer    
+     depends_on:
+      - zookeeper
+      - broker    
+  zookeeper:
+    image: wurstmeister/zookeeper
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    
+  broker:
+    image: wurstmeister/kafka
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_CREATE_TOPICS: "messag_exchange_topic:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  
